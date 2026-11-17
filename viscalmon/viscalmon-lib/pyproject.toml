@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "viscalmon"
+version = "0.1"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "matplotlib",
+    "Flask",
+    "pyproj",
+    "opencv-python",
+    "wradlib",
+    "psycopg[binary]",
+    "oracledb",
+    "pyarrow",
+    "tornado",
+]
+authors = [
+  {name = "Aurelien Verbeke", email = "pro.aurelien.verbeke@gmail.com"},
+]
+description = "A RMI library for radar visualisation, calibration and monitoring."
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Hydrology",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+
+[project.scripts]
+daily_monitoring = "viscalmon.dpol_monitoring.daily:main"
+
+[tool.setuptools.package-data]
+viscalmon = ["**/*.csv", "**/*.png", "**/*.json", "**/*.html", "**/*.sh"]
+
+[tool.setuptools.packages.find]
+include = ["viscalmon*"]

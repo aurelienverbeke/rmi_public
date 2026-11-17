@@ -1,0 +1,70 @@
+{% extends 'index.html' %}
+
+{% block central_block %}
+<div class="px-0 flex-grow-1 h-100 text-center" id="images-container"></div>
+{% endblock %}
+
+
+
+
+{% block after_radar_selection %}
+document.getElementById("select-radar").addEventListener(
+	"input",
+	async () => {
+		let radar = document.getElementById("select-radar").value;
+		
+		document.getElementById("select-moment").replaceChildren();
+		for (const moment of Object.keys(infos[radar])) {
+			document.getElementById("select-moment").add(new Option(moment));
+		}
+		document.getElementById("select-moment").dispatchEvent(new InputEvent("input"));
+	}
+);
+{% endblock %}
+
+{% block after_elevation_selection %}
+document.getElementById("select-elevation").addEventListener(
+	"input",
+	() => {
+		let radar = document.getElementById("select-radar").value;
+		let moment = document.getElementById("select-moment").value;
+		let elevation = document.getElementById("select-elevation").value;
+		
+		document.getElementById("dates").replaceChildren();
+		
+		layers = {};
+
+		for (const datetime of Object.keys(infos[radar][moment][elevation])) {
+			let key = `${radar}_${datetime}_${Math.round(parseFloat(elevation)*10)}_${moment}`;
+			
+			let par = document.createElement("p");
+			par.className = "mb-0 date";
+			par.innerText = datetime;
+			document.getElementById("dates").appendChild(par);
+
+			range = infos[radar][moment][elevation][datetime]["range"];
+			filename = infos[radar][moment][elevation][datetime]["file"];
+			
+			par.addEventListener(
+			"mouseover",
+			() => {
+				for (const [layerKey, layer] of Object.entries(layers)) {
+					layer.hidden = layerKey !== key;
+				}
+			});
+
+			let image = new Image();
+			image.src = `/static/{{static_folder}}${document.getElementById("select-interval").value}/${filename}`
+			image.hidden = true;
+			image.className = "border border-2 h-100 w-100";
+			layers[key] = image;
+
+
+		}
+		
+		document.getElementById("images-container").replaceChildren(...Object.values(layers));
+
+		document.getElementsByClassName("date")[0].dispatchEvent(new MouseEvent("mouseover"))
+	}
+);
+{% endblock %}

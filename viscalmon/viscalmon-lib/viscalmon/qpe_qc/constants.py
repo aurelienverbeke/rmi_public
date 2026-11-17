@@ -1,0 +1,1 @@
+AVAILABLE_RADARS = ["jabbeke", "wideumont", "avesnois", "helchteren"]

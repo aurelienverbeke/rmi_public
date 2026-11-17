@@ -1,0 +1,9 @@
+MAILTO=
+SHELL=/bin/bash
+0 6 * * * ~/viscalmon/launch_docker_runner.sh nice -5 daily_monitoring jabbeke $(date -d "yesterday" "+\%Y\%m\%d")
+0 6 * * * ~/viscalmon/launch_docker_runner.sh nice -5 daily_monitoring wideumont $(date -d "yesterday" "+\%Y\%m\%d")
+0 9 * * * ~/viscalmon/launch_docker_runner.sh nice -5 run_all_r_r_daily.sh $(date -d "yesterday" "+\%Y\%m\%d") $(date -d "yesterday" "+\%Y\%m\%d")
+0 9 * * * ~/viscalmon/launch_docker_runner.sh nice -5 run_all_g_r_daily.sh $(date -d "yesterday-2day" "+\%Y\%m\%d") $(date -d "yesterday-2day" "+\%Y\%m\%d")
+0 9 * * * ~/viscalmon/launch_docker_runner.sh nice -5 run_all_daily_shift.sh $(date -d "yesterday-2day" "+\%Y\%m\%d") $(date -d "yesterday-2day" "+\%Y\%m\%d")
+0 9 2 * * ~/viscalmon/launch_docker_runner.sh nice -5 run_all_g_r_monthly.sh $(date -d "today-3month" "+\%Y\%m") $(date -d "today-3month" "+\%Y\%m")
+0 9 2 * * ~/viscalmon/launch_docker_runner.sh nice -5 run_all_r_r_monthly.sh $(date -d "today-1month" "+\%Y\%m") $(date -d "today-1month" "+\%Y\%m")

@@ -1,0 +1,19 @@
+name: viscalmon-runner
+
+services:
+  runner:
+    build: 
+      args:
+        - LOGS_GROUP_ID=${LOGS_GROUP_ID}
+        - LOGS_GROUP_NAME=${LOGS_GROUP_NAME}
+      context: .
+    container_name: viscalmon-runner
+    entrypoint: /entrypoint.sh
+    env_file: .env
+    #healthcheck:
+    restart: "no"
+    userns_mode: "host"
+    volumes:
+      - /mnt/HDS_ERS:/mnt/HDS_ERS
+      - /mnt/HDS_RADQPE2:/mnt/HDS_RADQPE2
+      - $LOGS_DIR:/logs

@@ -1,0 +1,24 @@
+name: viscalmon-daemons
+
+services:
+  grafana:
+    build:
+      context: grafana
+    container_name: viscalmon-grafana
+    env_file: .env
+    ports:
+    - "3159:3000"
+    restart: unless-stopped 
+  
+  db:
+    image: postgres:18.4-alpine3.24
+    container_name: viscalmon-postgres
+    env_file: .env.postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    volumes:
+      - db-data:/var/lib/postgresql/18/docker/
+  
+volumes:
+  db-data:

@@ -1,0 +1,18 @@
+name: viscalmon-viewer
+
+services:
+  web:
+    build: 
+      context: .
+    container_name: viscalmon-viewer
+    entrypoint: /entrypoint.viewer.sh
+    #healthcheck:
+    ports:
+      - "$VIEWER_PORT:$VIEWER_PORT"
+    restart: unless-stopped
+    volumes:
+      - /mnt/HDS_ERS:/mnt/HDS_ERS:ro
+      - viscalmon-static:$DIR_VIEWER_STATIC
+  
+volumes:
+  viscalmon-static:

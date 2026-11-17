@@ -1,0 +1,174 @@
+{% extends 'index.html' %}
+
+{% block opacity_html %}
+<h3 class="mt-4">Opacity</h3>
+<table>
+	<tr>
+		<td><label for="opacity-map" class="form-label mb-0 me-2">Map</label></td>
+		<td><input type="range" class="form-range d-block" min="0" max="1" step="0.1" id="opacity-map"></td>
+	</tr>
+	<tr>
+		<td><label for="opacity-image" class="form-label mb-0 me-2">Image</label></td>
+		<td><input type="range" class="form-range d-block" min="0" max="1" step="0.1" id="opacity-image"></td>
+	</tr>
+</table>
+{% endblock %}
+
+{% block central_block %}
+<div class="px-0 flex-grow-1 h-100" id="map"></div>
+{% endblock %}
+
+
+
+
+{% block map_creation %}
+	let tileLayer = new ol.layer.Tile({
+		source: new ol.source.XYZ({
+			url: "http://s.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+		}),
+	});
+	let imagesLayersGroup = new ol.layer.Group({zIndex: 1});
+	let map = new ol.Map({
+		target: "map",
+		layers: [ tileLayer ],
+		view: new ol.View({
+			center: [0, 0],
+			zoom: 3
+		})
+	})
+	map.addLayer(imagesLayersGroup);
+	map.addControl(new ol.control.FullScreen());
+	let zoomToExtentControl = new ol.control.ZoomToExtent({ extent: map.getView().calculateExtent(map.getSize()), tipLabel: "Reset extent" });
+	map.addControl(zoomToExtentControl);
+	let projection;
+	let layers = {};
+{% endblock %}
+
+{% block after_radar_selection %}
+document.getElementById("select-radar").addEventListener(
+	"input",
+	async () => {
+		let radar = document.getElementById("select-radar").value;
+		
+		let res = await fetch(`/pos/${radar}`);
+		let pos = await res.json();
+
+		proj4.defs(`aeqd_${radar}`, `+proj=aeqd +lat_0=${pos["lat"]} +lon_0=${pos["lon"]} +x_0=0 +y_0=0 +R=6371000 +units=m +no_defs +type=crs`);
+		ol.proj.proj4.register(proj4);
+		projection = new ol.proj.Projection({ code:`aeqd_${radar}`, extent:[-500000, -500000, 500000, 500000] });
+
+		map.setView(new ol.View({
+			projection: projection,
+			center: [0, 0],
+			zoom: 3
+		}));
+
+		document.getElementById("select-moment").replaceChildren();
+		for (const moment of Object.keys(infos[radar])) {
+			document.getElementById("select-moment").add(new Option(moment));
+		}
+		document.getElementById("select-moment").dispatchEvent(new InputEvent("input"));
+	}
+);
+{% endblock %}
+
+{% block after_elevation_selection %}
+document.getElementById("select-elevation").addEventListener(
+	"input",
+	() => {
+		let radar = document.getElementById("select-radar").value;
+		let moment = document.getElementById("select-moment").value;
+		let elevation = document.getElementById("select-elevation").value;
+		
+		document.getElementById("dates").replaceChildren();
+		
+		let square = new ol.Feature({
+			geometry: new ol.geom.Polygon([])
+		});
+
+		let styleBorderBlack = new ol.style.Style({
+			stroke: new ol.style.Stroke({
+				color: "black",
+				width: 2
+			})
+		});
+		square.setStyle(styleBorderBlack);
+
+
+		layers = { "bounds": new ol.layer.Vector({
+					source: new ol.source.Vector({
+						features: [ square ]
+					})
+				})
+		};
+
+
+		for (const datetime of Object.keys(infos[radar][moment][elevation])) {
+			let key = `${radar}_${datetime}_${Math.round(parseFloat(elevation)*10)}_${moment}`;
+			
+			let par = document.createElement("p");
+			par.className = "mb-0 date";
+			par.innerText = datetime;
+			document.getElementById("dates").appendChild(par);
+
+			range = infos[radar][moment][elevation][datetime]["range"];
+			filename = infos[radar][moment][elevation][datetime]["file"];
+			
+			par.addEventListener(
+			"mouseover",
+			() => {
+				for (const [layerKey, layer] of Object.entries(layers)) {
+					layer.setVisible(layerKey === key || layerKey === "bounds");
+				}
+
+				square.getGeometry().setCoordinates([[
+					[-range*1000, -range*1000],
+					[-range*1000, range*1000],
+					[range*1000, range*1000],
+					[range*1000, -range*1000],
+					[-range*1000, -range*1000]
+				]]);
+			});
+
+			layers[key] = new ol.layer.Image({
+				source: new ol.source.ImageStatic({
+					url: `/static/{{static_folder}}${document.getElementById("select-interval").value}/${filename}`,
+					imageExtent: [-range*1000, -range*1000, range*1000, range*1000],
+					interpolate: false
+				})
+			});
+		}
+		
+		imagesLayersGroup.setLayers(new ol.Collection(Object.values(layers)));
+
+		maxRange = Math.max(...Object.values(infos[radar][moment][elevation]).map((info_datetime) => info_datetime["range"]));
+		map.getView().fit([-maxRange*1000, -maxRange*1000, maxRange*1000, maxRange*1000]);
+		map.removeControl(zoomToExtentControl);
+		zoomToExtentControl = new ol.control.ZoomToExtent({ extent: [-maxRange*1000, -maxRange*1000, maxRange*1000, maxRange*1000], tipLabel: "Reset extent" });
+		map.addControl(zoomToExtentControl);
+		
+		document.getElementsByClassName("date")[0].dispatchEvent(new MouseEvent("mouseover"))
+	}
+);
+{% endblock %}
+
+{% block opacity_script %}
+document.getElementById("opacity-map").addEventListener(
+	"input",
+	() => {
+		tileLayer.setOpacity(document.getElementById("opacity-map").valueAsNumber);
+	}
+);
+
+document.getElementById("opacity-image").addEventListener(
+	"input",
+	() => {
+		imagesLayersGroup.setOpacity(document.getElementById("opacity-image").valueAsNumber);
+	}
+);
+
+document.getElementById("opacity-map").valueAsNumber = 1;
+document.getElementById("opacity-map").dispatchEvent(new InputEvent("input"));
+document.getElementById("opacity-image").valueAsNumber = 0.8;
+document.getElementById("opacity-image").dispatchEvent(new InputEvent("input"));
+{% endblock %}
